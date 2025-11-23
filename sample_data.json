@@ -1,0 +1,101 @@
+{
+  "classes": [
+    {"id": 0, "name": "COA_1", "teacher": "Prof. Manoj", "group": "2ndYear", "size": 67},
+    {"id": 1, "name": "COA_2", "teacher": "Prof. Manoj", "group": "2ndYear", "size": 67},
+    {"id": 2, "name": "COA_3", "teacher": "Prof. Manoj", "group": "2ndYear", "size": 67},
+
+    {"id": 3, "name": "OS_1", "teacher": "Prof. Lavanya Naik", "group": "2ndYear", "size": 67},
+    {"id": 4, "name": "OS_2", "teacher": "Prof. Lavanya Naik", "group": "2ndYear", "size": 67},
+    {"id": 5, "name": "OS_3", "teacher": "Prof. Lavanya Naik", "group": "2ndYear", "size": 67},
+
+    {"id": 6, "name": "DBMS_1", "teacher": "Dr. Sindhu", "group": "2ndYear", "size": 67},
+    {"id": 7, "name": "DBMS_2", "teacher": "Dr. Sindhu", "group": "2ndYear", "size": 67},
+    {"id": 8, "name": "DBMS_3", "teacher": "Dr. Sindhu", "group": "2ndYear", "size": 67},
+    {"id": 9, "name": "DBMS_4", "teacher": "Dr. Sindhu", "group": "2ndYear", "size": 67},
+
+    {"id": 10, "name": "Maths1_1", "teacher": "Prof. X", "group": "2ndYear", "size": 67},
+    {"id": 11, "name": "Maths1_2", "teacher": "Prof. X", "group": "2ndYear", "size": 67},
+    {"id": 12, "name": "Maths1_3", "teacher": "Prof. X", "group": "2ndYear", "size": 67},
+
+    {"id": 13, "name": "FDS_1", "teacher": "Prof. Manoj", "group": "2ndYear", "size": 67},
+    {"id": 14, "name": "FDS_2", "teacher": "Prof. Manoj", "group": "2ndYear", "size": 67},
+    {"id": 15, "name": "FDS_3", "teacher": "Prof. Manoj", "group": "2ndYear", "size": 67},
+
+    {"id": 16, "name": "DSA1_1", "teacher": "Dr. Shambhavi BR", "group": "2ndYear", "size": 67},
+    {"id": 17, "name": "DSA1_2", "teacher": "Dr. Shambhavi BR", "group": "2ndYear", "size": 67},
+    {"id": 18, "name": "DSA1_3", "teacher": "Dr. Shambhavi BR", "group": "2ndYear", "size": 67},
+    {"id": 19, "name": "DSA1_4", "teacher": "Dr. Shambhavi BR", "group": "2ndYear", "size": 67},
+
+    {"id": 20, "name": "RPM_1", "teacher": "Dr. Kalyan Nagaraj", "group": "2ndYear", "size": 67},
+    {"id": 21, "name": "RPM_2", "teacher": "Dr. Kalyan Nagaraj", "group": "2ndYear", "size": 67},
+    {"id": 22, "name": "RPM_3", "teacher": "Dr. Kalyan Nagaraj", "group": "2ndYear", "size": 67},
+
+    {"id": 23, "name": "TSA_1", "teacher": "Dr. Kalyan Nagaraj", "group": "3rdYear", "size": 69},
+    {"id": 24, "name": "TSA_2", "teacher": "Dr. Kalyan Nagaraj", "group": "3rdYear", "size": 69},
+    {"id": 25, "name": "TSA_3", "teacher": "Dr. Kalyan Nagaraj", "group": "3rdYear", "size": 69},
+
+    {"id": 26, "name": "DSA2_1", "teacher": "Dr. Shambhavi BR", "group": "3rdYear", "size": 69},
+    {"id": 27, "name": "DSA2_2", "teacher": "Dr. Shambhavi BR", "group": "3rdYear", "size": 69},
+    {"id": 28, "name": "DSA2_3", "teacher": "Dr. Shambhavi BR", "group": "3rdYear", "size": 69},
+
+    {"id": 29, "name": "ML_1", "teacher": "Prof. Manoj", "group": "3rdYear", "size": 69},
+    {"id": 30, "name": "ML_2", "teacher": "Prof. Manoj", "group": "3rdYear", "size": 69},
+    {"id": 31, "name": "ML_3", "teacher": "Prof. Manoj", "group": "3rdYear", "size": 69},
+    {"id": 32, "name": "ML_4", "teacher": "Prof. Manoj", "group": "3rdYear", "size": 69},
+
+    {"id": 33, "name": "Maths2_1", "teacher": "Prof. X", "group": "3rdYear", "size": 69},
+    {"id": 34, "name": "Maths2_2", "teacher": "Prof. X", "group": "3rdYear", "size": 69},
+    {"id": 35, "name": "Maths2_3", "teacher": "Prof. X", "group": "3rdYear", "size": 69},
+
+    {"id": 36, "name": "CC_1", "teacher": "Dr. Kalyan Nagaraj", "group": "3rdYear", "size": 69},
+    {"id": 37, "name": "CC_2", "teacher": "Dr. Kalyan Nagaraj", "group": "3rdYear", "size": 69},
+    {"id": 38, "name": "CC_3", "teacher": "Dr. Kalyan Nagaraj", "group": "3rdYear", "size": 69},
+
+    {"id": 39, "name": "NGD_1", "teacher": "Dr. Sindhu", "group": "3rdYear", "size": 69},
+    {"id": 40, "name": "NGD_2", "teacher": "Dr. Sindhu", "group": "3rdYear", "size": 69},
+    {"id": 41, "name": "NGD_3", "teacher": "Dr. Sindhu", "group": "3rdYear", "size": 69},
+    {"id": 42, "name": "NGD_4", "teacher": "Dr. Sindhu", "group": "3rdYear", "size": 69},
+
+    {"id": 43, "name": "CN_1", "teacher": "Prof. Lavanya Naik", "group": "3rdYear", "size": 69},
+    {"id": 44, "name": "CN_2", "teacher": "Prof. Lavanya Naik", "group": "3rdYear", "size": 69},
+    {"id": 45, "name": "CN_3", "teacher": "Prof. Lavanya Naik", "group": "3rdYear", "size": 69},
+
+    {"id": 46, "name": "ENV_1", "teacher": "Prof. Sandhya", "group": "3rdYear", "size": 69},
+
+    {"id": 47, "name": "NLP_1", "teacher": "Prof. Navya", "group": "4thYear", "size": 73},
+    {"id": 48, "name": "NLP_2", "teacher": "Prof. Navya", "group": "4thYear", "size": 73},
+    {"id": 49, "name": "NLP_3", "teacher": "Prof. Navya", "group": "4thYear", "size": 73},
+    {"id": 50, "name": "NLP_4", "teacher": "Prof. Navya", "group": "4thYear", "size": 73},
+
+    {"id": 51, "name": "CYS_1", "teacher": "Prof. Nayana", "group": "4thYear", "size": 73},
+    {"id": 52, "name": "CYS_2", "teacher": "Prof. Nayana", "group": "4thYear", "size": 73},
+    {"id": 53, "name": "CYS_3", "teacher": "Prof. Nayana", "group": "4thYear", "size": 73},
+
+    {"id": 54, "name": "EPM_1", "teacher": "Prof. Lavanya Naik", "group": "4thYear", "size": 73},
+    {"id": 55, "name": "EPM_2", "teacher": "Prof. Lavanya Naik", "group": "4thYear", "size": 73},
+
+    {"id": 56, "name": "PFY_1", "teacher": "Prof. Manoj", "group": "4thYear", "size": 73},
+    {"id": 57, "name": "PFY_2", "teacher": "Prof. Manoj", "group": "4thYear", "size": 73},
+    {"id": 58, "name": "PFY_3", "teacher": "Prof. Manoj", "group": "4thYear", "size": 73},
+    {"id": 59, "name": "PFY_4", "teacher": "Prof. Manoj", "group": "4thYear", "size": 73},
+    {"id": 60, "name": "PFY_5", "teacher": "Prof. Manoj", "group": "4thYear", "size": 73},
+    {"id": 61, "name": "PFY_6", "teacher": "Prof. Manoj", "group": "4thYear", "size": 73},
+    {"id": 62, "name": "PFY_7", "teacher": "Prof. Manoj", "group": "4thYear", "size": 73},
+
+    {"id": 63, "name": "IKS_1", "teacher": "Dr. Shambhavi BR", "group": "4thYear", "size": 73}
+  ],
+
+  "rooms": [
+    {"id": 0, "name": "606", "capacity": 75},
+    {"id": 1, "name": "607", "capacity": 75},
+    {"id": 2, "name": "Lab-1", "capacity": 75, "room_type": "lab"}
+  ],
+
+  "timeslots": [
+    "Mon_P1", "Mon_P2", "Mon_P3", "Mon_P4", "Mon_P5", "Mon_P6", "Mon_P7",
+    "Tue_P1", "Tue_P2", "Tue_P3", "Tue_P4", "Tue_P5", "Tue_P6", "Tue_P7",
+    "Wed_P1", "Wed_P2", "Wed_P3", "Wed_P4", "Wed_P5", "Wed_P6", "Wed_P7",
+    "Thu_P1", "Thu_P2", "Thu_P3", "Thu_P4", "Thu_P5", "Thu_P6", "Thu_P7",
+    "Fri_P1", "Fri_P2", "Fri_P3", "Fri_P4", "Fri_P5", "Fri_P6", "Fri_P7"
+  ]
+}
