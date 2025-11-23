@@ -23,14 +23,24 @@ def subject_base(name: str):
         return name.split("_", 1)[0]
     return name
 
-def find_subject_day_violations(chromosome, classes, timeslots):
+def get_subject_weekly_counts(classes):
     """
-    Return list of violations: each item is (subject, day, list_of_period_indices_on_day)
-    where the list is non-consecutive (i.e., violation).
+    Count how many sessions each base-subject has in the whole classes list (i.e., weekly sessions).
+    Returns dict: subject -> count (int).
+    This is used to determine which subjects have >3 sessions/week.
     """
-    # build map: (subject, day) -> list of period indices (period index = int order within day)
-    # we need mapping timeslot_idx -> (day, period_order)
-    # build day->ordered periods mapping from timeslots
+    counts = {}
+    for cl in classes:
+        subj = subject_base(cl.name)
+        counts[subj] = counts.get(subj, 0) + 1
+    return counts
+
+def _build_day_order_and_tsindex_map(timeslots):
+    """
+    Build:
+     - day_periods: dict day -> list of (period_label, ts_idx) in appearance order
+     - tsidx_to_order: dict ts_idx -> (day, order_index_within_day)
+    """
     day_periods = {}
     for ts_idx, label in enumerate(timeslots):
         if "_" in label:
@@ -42,15 +52,24 @@ def find_subject_day_violations(chromosome, classes, timeslots):
             day = parts[0]
             period = parts[1] if len(parts) > 1 else ""
         day_periods.setdefault(day, []).append((period, ts_idx))
-    # for deterministic order, sort periods within each day by appearance of ts_idx
-    for d in day_periods:
-        day_periods[d].sort(key=lambda x: x[1])  # keeps ts_idx order
-        # map ts_idx to period_order (0..n-1)
-        # make reverse map: ts_idx -> period_order
     tsidx_to_order = {}
     for d in day_periods:
+        # already in appearance order by ts_idx, but ensure sort by ts_idx
+        day_periods[d].sort(key=lambda x: x[1])
         for order, (_p, tsidx) in enumerate(day_periods[d]):
             tsidx_to_order[tsidx] = (d, order)
+    return day_periods, tsidx_to_order
+
+def find_subject_day_violations(chromosome, classes, timeslots):
+    """
+    Return list of violations: (subject, day, sorted_list_of_period_orders_on_that_day)
+    ONLY subjects with weekly_count > 3 are checked; subjects with <=3 sessions/week are ignored.
+    """
+    # compute weekly counts
+    weekly_counts = get_subject_weekly_counts(classes)
+
+    # build ts index -> (day, order)
+    day_periods, tsidx_to_order = _build_day_order_and_tsindex_map(timeslots)
 
     subj_day_map = {}
     for idx, gene in enumerate(chromosome):
@@ -63,19 +82,18 @@ def find_subject_day_violations(chromosome, classes, timeslots):
 
     violations = []
     for (subj, day), orders in subj_day_map.items():
+        weekly = weekly_counts.get(subj, 0)
+        # Only enforce the consecutive-block rule for subjects with weekly sessions > 3
+        if weekly <= 3:
+            continue
         if len(orders) <= 1:
-            continue  # no problem
+            continue  # single session on a day is always ok
         orders_sorted = sorted(orders)
         # check if these orders form a single consecutive block
         is_consecutive = all(orders_sorted[i] + 1 == orders_sorted[i+1] for i in range(len(orders_sorted)-1))
         if not is_consecutive:
             violations.append((subj, day, orders_sorted))
     return violations
-
-# integrate into evaluate_fitness: add big penalty for subject-day non-consecutive violations
-# Example insertion inside evaluate_fitness (pseudocode):
-# violations = find_subject_day_violations(chromosome, classes, timeslots)
-# penalty += SUBJECT_DAY_VIOL_PEN * len(violations)
 
 SUBJECT_DAY_VIOL_PEN = 2000  # large penalty — treat as hard constraint
 
@@ -112,25 +130,35 @@ def build_occupancy(chromosome):
     return {(g[0], g[1]): True for g in chromosome}
 
 def would_create_subject_day_violation(chromosome, classes, timeslots, class_idx, candidate_ts):
-    # simulate placing class_idx at candidate_ts and check violations
+    """
+    Simulate moving class_idx to candidate_ts. Return True if that move would create a
+    subject-day non-consecutive violation **for that subject**, given the weekly counts rule (>3).
+    """
+    # quick check: if subject has weekly_count <= 3 then it's never restricted
+    subj = subject_base(classes[class_idx].name)
+    weekly_counts = get_subject_weekly_counts(classes)
+    if weekly_counts.get(subj, 0) <= 3:
+        return False
+
+    # simulate placing class_idx at candidate_ts (room unchanged for simulation)
     sim = list(chromosome)
     _, curr_room = sim[class_idx]
     sim[class_idx] = (candidate_ts, curr_room)
+
+    # compute violations on simulated chromosome
     violations = find_subject_day_violations(sim, classes, timeslots)
-    # if violations include the subject of class_idx on that day, consider it bad
-    subj = subject_base(classes[class_idx].name)
-    candidate_day = None
+    # if violations include this subject on the candidate day, then move is bad
+    # derive candidate_day
     if "_" in timeslots[candidate_ts]:
-        candidate_day = timeslots[candidate_ts].split("_",1)[0]
+        candidate_day = timeslots[candidate_ts].split("_", 1)[0]
     elif "-" in timeslots[candidate_ts]:
-        candidate_day = timeslots[candidate_ts].split("-",1)[0]
+        candidate_day = timeslots[candidate_ts].split("-", 1)[0]
     else:
-        candidate_day = timeslots[candidate_ts].split(" ",1)[0]
+        candidate_day = timeslots[candidate_ts].split(" ", 1)[0]
     for v in violations:
         if v[0] == subj and v[1] == candidate_day:
             return True
     return False
-
 
 def find_free_slot(chromosome, classes, rooms, timeslots, class_idx,
                    per_day_limits=None, timeslot_day_map=None, rooms_info=None):

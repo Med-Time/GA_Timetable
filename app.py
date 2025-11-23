@@ -1,4 +1,3 @@
-# app.py
 import streamlit as st
 import pandas as pd
 import json
@@ -16,32 +15,127 @@ except Exception:
 st.set_page_config(page_title="Timetable GA", layout="wide")
 st.title("Timetable Scheduling — Genetic Algorithm (Streamlit)")
 
-# Sidebar: data input
-st.sidebar.header("Input Data")
-use_sample = st.sidebar.checkbox("Use sample data (sample_data.json)", value=True)
-uploaded = st.sidebar.file_uploader("Or upload JSON file", type=["json"])
+# -------------------------
+# Input selection controls
+# -------------------------
+st.sidebar.header("Input method")
+input_mode = st.sidebar.radio("Choose how to provide data:", ("Use sample JSON", "Upload JSON file", "Paste JSON", "Manual entry"))
 
-if use_sample:
+# in-memory data structures
+if "classes" not in st.session_state:
+    st.session_state["classes"] = []
+if "rooms" not in st.session_state:
+    st.session_state["rooms"] = []
+if "timeslots" not in st.session_state:
+    st.session_state["timeslots"] = []
+
+# helper to clear session state when switching modes
+def reset_session_inputs():
+    st.session_state["classes"] = []
+    st.session_state["rooms"] = []
+    st.session_state["timeslots"] = []
+
+# if user switches mode, only clear when they press a reset button to avoid accidental wipes
+# -------------------------
+# Load initial data depending on input mode
+# -------------------------
+classes = []
+rooms = []
+timeslots = []
+
+if input_mode == "Use sample JSON":
     try:
         classes, rooms, timeslots = load_from_json_file("sample_data.json")
+        st.info("Loaded sample_data.json")
     except Exception as e:
-        st.sidebar.error(f"Failed to load sample_data.json: {e}")
+        st.error(f"Failed to load sample_data.json: {e}")
         st.stop()
-else:
-    if uploaded is None:
-        st.sidebar.info("Upload JSON or check 'Use sample data'")
-        st.stop()
-    else:
-        data = json.load(uploaded)
-        classes, rooms, timeslots = load_from_dict(data)
-# Sidebar: subject-per-day consecutive rule
-st.sidebar.markdown("### Subject per-day rule")
-enforce_subject_consecutive = st.sidebar.selectbox(
-    "Enforce: same subject >1 session/day allowed only if consecutive",
-    ("Hard (forbid non-consecutive)", "Soft (penalize non-consecutive)")
-)
-# pass mode into run_ga by mapping to params: use_hard_subject_rule = (enforce_subject_consecutive == "Hard ...")
 
+elif input_mode == "Upload JSON file":
+    uploaded = st.sidebar.file_uploader("Upload JSON", type=["json"])
+    if uploaded is not None:
+        try:
+            data = json.load(uploaded)
+            classes, rooms, timeslots = load_from_dict(data)
+            st.sidebar.success("Loaded uploaded JSON")
+        except Exception as e:
+            st.sidebar.error(f"Failed to parse uploaded JSON: {e}")
+            st.stop()
+    else:
+        st.sidebar.info("No file uploaded — waiting for file")
+
+elif input_mode == "Paste JSON":
+    pasted = st.sidebar.text_area("Paste JSON here (schema: classes[], rooms[], timeslots[])", height=220)
+    if st.sidebar.button("Load pasted JSON"):
+        if not pasted:
+            st.sidebar.error("Please paste JSON then click Load pasted JSON")
+        else:
+            try:
+                data = json.loads(pasted)
+                classes, rooms, timeslots = load_from_dict(data)
+                st.sidebar.success("Loaded pasted JSON")
+            except Exception as e:
+                st.sidebar.error(f"Failed to parse pasted JSON: {e}")
+
+elif input_mode == "Manual entry":
+    st.sidebar.markdown("Add rooms, timeslots, and subjects manually. Use **Add X** buttons to append entries.")
+    # Rooms entry
+    with st.sidebar.expander("Add Room (Manual)"):
+        r_name = st.text_input("Room name", key="room_name")
+        r_capacity = st.number_input("Capacity", min_value=1, value=75, key="room_capacity")
+        r_type = st.selectbox("Room type", ("standard", "lab"), key="room_type")
+        if st.button("Add room"):
+            rid = len(st.session_state["rooms"])
+            st.session_state["rooms"].append({"id": rid, "name": r_name or f"Room-{rid}", "capacity": int(r_capacity), "room_type": r_type})
+            st.success(f"Added room {r_name or f'Room-{rid}'}")
+
+    # Timeslot entry
+    with st.sidebar.expander("Add Timeslot (Manual)"):
+        # Expect label like "Mon_P1"
+        ts_label = st.text_input("Timeslot label (e.g. Mon_P1)", key="ts_label")
+        if st.button("Add timeslot"):
+            if not ts_label:
+                st.sidebar.error("Provide timeslot label")
+            else:
+                st.session_state["timeslots"].append(ts_label.strip())
+                st.success(f"Added timeslot {ts_label.strip()}")
+
+    # Subject entry: subject name, teacher, group (year), size, credits -> will expand to sessions
+    with st.sidebar.expander("Add Subject (Manual, add credits)"):
+        subj_name = st.text_input("Subject name (base)", key="subj_name")
+        subj_teacher = st.text_input("Teacher name", key="subj_teacher")
+        subj_group = st.text_input("Group (e.g., 2ndYear)", key="subj_group")
+        subj_size = st.number_input("Class size", min_value=1, value=30, key="subj_size")
+        subj_credits = st.number_input("Weekly credits (sessions) for subject", min_value=1, value=3, key="subj_credits")
+        subj_room_type = st.selectbox("Room type required", ("standard", "lab"), key="subj_room_type")
+        if st.button("Add subject (expand by credits)"):
+            if not subj_name or not subj_teacher or not subj_group:
+                st.sidebar.error("Provide subject name, teacher, and group")
+            else:
+                # expand into sessions SUBJ_1 ... SUBJ_k
+                start_idx = len(st.session_state["classes"])
+                for i in range(1, int(subj_credits) + 1):
+                    sid = len(st.session_state["classes"])
+                    entry = {"id": sid, "name": f"{subj_name}_{i}", "teacher": subj_teacher, "group": subj_group, "size": int(subj_size), "room_type": subj_room_type}
+                    st.session_state["classes"].append(entry)
+                st.success(f"Added {int(subj_credits)} sessions for subject {subj_name}")
+
+    # Optional: buttons to clear manual inputs
+    if st.sidebar.button("Reset manual entries"):
+        reset_session_inputs()
+        st.sidebar.success("Manual session data cleared")
+
+    # populate from session_state
+    classes = [type("C", (), c)() for c in st.session_state["classes"]]
+    # convert dicts to ClassItem-like objects expected by app (simple object with attributes)
+    # If data_utils.ClassItem dataclass was expected, later code uses c.__dict__ for display; having simple objects works.
+    rooms = [type("R", (), r)() for r in st.session_state["rooms"]]
+    timeslots = list(st.session_state["timeslots"])
+
+# Basic validation: ensure we have at least something
+if not classes or not rooms or not timeslots:
+    st.warning("Incomplete input: please provide classes, rooms, and timeslots via your chosen input method.")
+    st.stop()
 
 # Sidebar: GA params
 st.sidebar.header("GA Parameters")
@@ -94,9 +188,16 @@ else:
 # Show raw inputs
 with st.expander("Show raw input data"):
     st.write("classes:")
-    st.dataframe(pd.DataFrame([c.__dict__ for c in classes]))
+    # convert objects/dicts to displayable dicts
+    try:
+        st.dataframe(pd.DataFrame([c.__dict__ for c in classes]))
+    except Exception:
+        st.write(classes)
     st.write("rooms:")
-    st.dataframe(pd.DataFrame([r.__dict__ for r in rooms]))
+    try:
+        st.dataframe(pd.DataFrame([r.__dict__ for r in rooms]))
+    except Exception:
+        st.write(rooms)
     st.write("timeslots:")
     st.write(timeslots)
     st.write("Per-day periods (parsed):")
@@ -124,6 +225,7 @@ def build_empty_group_tables(classes, timeslots):
 # Run GA button and logic
 if st.button("Run GA"):
     seed_val = None if seed == 0 else int(seed)
+    # subj_mode = "hard" if enforce_subject_consecutive.startswith("Hard") else "soft"
     with st.spinner("Running GA — please wait..."):
         best_chrom, best_fit = run_ga(classes, rooms, timeslots,
                                       pop_size=pop_size,
