@@ -13,7 +13,6 @@ def create_random_chromosome(classes, rooms, timeslots):
     return [random_gene(timeslots, rooms) for _ in classes]
 
 # ---------- Subject-per-day consecutive constraint helpers ----------
-
 def subject_base(name: str):
     """
     Extract base subject name from class name like 'COA_1' -> 'COA'.

@@ -3,7 +3,7 @@ import pandas as pd
 import json
 from collections import defaultdict
 from data_utils import load_from_dict, load_from_json_file, total_sessions_required, build_per_day_period_map
-from ga import run_ga, evaluate_fitness  # evaluate_fitness used for polishing feedback
+from ga import run_ga, evaluate_fitness, subject_base  # evaluate_fitness used for polishing feedback
 # optional imports from ga (may raise if not present)
 try:
     from ga import repair_chromosome, detect_conflicts, local_swap_improve
@@ -89,16 +89,64 @@ elif input_mode == "Manual entry":
             st.session_state["rooms"].append({"id": rid, "name": r_name or f"Room-{rid}", "capacity": int(r_capacity), "room_type": r_type})
             st.success(f"Added room {r_name or f'Room-{rid}'}")
 
-    # Timeslot entry
-    with st.sidebar.expander("Add Timeslot (Manual)"):
-        # Expect label like "Mon_P1"
-        ts_label = st.text_input("Timeslot label (e.g. Mon_P1)", key="ts_label")
-        if st.button("Add timeslot"):
-            if not ts_label:
-                st.sidebar.error("Provide timeslot label")
+        # Timeslot generation by per-day counts
+    with st.sidebar.expander("Generate Timeslots (Manual)"):
+        st.write(
+            "Select working days and specify number of periods per day. "
+            "The app will generate labels like Mon_P1, Mon_P2, ..., Sat_Pn automatically."
+        )
+
+        # All available day options (codes + full names)
+        day_options = [
+            ("Mon", "Monday"),
+            ("Tue", "Tuesday"),
+            ("Wed", "Wednesday"),
+            ("Thu", "Thursday"),
+            ("Fri", "Friday"),
+            ("Sat", "Saturday"),
+        ]
+
+        # Default selection: Monday to Friday (you can change this to Mon–Sat if you want)
+        default_days_full = [name for code, name in day_options[:5]]  # Mon–Fri by default
+
+        # Let user choose which days are working days
+        selected_days_full = st.multiselect(
+            "Working days",
+            options=[name for _, name in day_options],
+            default=default_days_full,
+        )
+
+        # Map full name -> code and build per-day periods input only for selected days
+        full_to_code = {full: code for code, full in day_options}
+
+        periods_per_day = {}
+        for full_name in selected_days_full:
+            code = full_to_code[full_name]
+            periods_per_day[code] = st.number_input(
+                f"{full_name} periods",
+                min_value=0,
+                max_value=12,
+                value=7,
+                key=f"periods_{code}",
+            )
+
+        if st.button("Generate timeslots"):
+            if not selected_days_full:
+                st.sidebar.error("Please select at least one working day.")
             else:
-                st.session_state["timeslots"].append(ts_label.strip())
-                st.success(f"Added timeslot {ts_label.strip()}")
+                # Clear any existing manual timeslots
+                st.session_state["timeslots"].clear()
+
+                # Generate labels like Mon_P1, Mon_P2, ..., Sat_Pn
+                for full_name in selected_days_full:
+                    code = full_to_code[full_name]
+                    n = int(periods_per_day.get(code, 0))
+                    for i in range(1, n + 1):
+                        st.session_state["timeslots"].append(f"{code}_P{i}")
+
+                st.success(f"Generated {len(st.session_state['timeslots'])} timeslots.")
+                st.write("Example:", st.session_state["timeslots"][:10])
+
 
     # Subject entry: subject name, teacher, group (year), size, credits -> will expand to sessions
     with st.sidebar.expander("Add Subject (Manual, add credits)"):
@@ -225,7 +273,6 @@ def build_empty_group_tables(classes, timeslots):
 # Run GA button and logic
 if st.button("Run GA"):
     seed_val = None if seed == 0 else int(seed)
-    # subj_mode = "hard" if enforce_subject_consecutive.startswith("Hard") else "soft"
     with st.spinner("Running GA — please wait..."):
         best_chrom, best_fit = run_ga(classes, rooms, timeslots,
                                       pop_size=pop_size,
@@ -249,7 +296,7 @@ if st.button("Run GA"):
         day, period = parse_timeslot_label(ts_label)
         if day not in days or period not in periods_order:
             continue
-        cell_text = f"{cl.name} ({rooms[room_idx].name} - {cl.teacher})"
+        cell_text = f"{subject_base(cl.name)} ({rooms[room_idx].name} - {cl.teacher})"
         prev = group_tables[cl.group].at[day, period]
         if prev:
             group_tables[cl.group].at[day, period] = prev + " | CONFLICT | " + cell_text
@@ -267,14 +314,14 @@ if st.button("Run GA"):
 
     # Room × Timeslot grid (for reference)
     st.markdown("---")
-    st.subheader("Room × Timeslot Grid (for reference)")
+    st.subheader("Room x Timeslot Grid (for reference)")
     room_names = [r.name for r in rooms]
     timeslot_labels = timeslots
     room_grid = pd.DataFrame([["" for _ in timeslot_labels] for _ in room_names], index=room_names, columns=timeslot_labels)
     for idx, gene in enumerate(best_chrom):
         t_idx, r_idx = gene
         cl = classes[idx]
-        cell_text = f"{cl.name} ({cl.teacher}) [{cl.group}]"
+        cell_text = f"{subject_base(cl.name)} ({cl.teacher}) [{cl.group}]"
         prev = room_grid.iat[r_idx, t_idx]
         if prev:
             room_grid.iat[r_idx, t_idx] = prev + " | CONFLICT | " + cell_text
